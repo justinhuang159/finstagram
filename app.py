@@ -12,10 +12,10 @@ IMAGES_DIR = os.path.join(os.getcwd(), "images")
 
 connection = pymysql.connect(host="localhost",
                              user="root",
-                             password="root",
+                             password="",
                              db="finstagram",
                              charset="utf8mb4",
-                             port=8889,
+                             port=3306,
                              cursorclass=pymysql.cursors.DictCursor,
                              autocommit=True)
 
@@ -97,7 +97,9 @@ def registerAuth():
         hashedPassword = hashlib.sha256(plaintextPasword.encode("utf-8")).hexdigest()
         firstName = requestData["fname"]
         lastName = requestData["lname"]
-        isPrivate = 1 if requestData.getlist('isPrivate')[0] == "on" else 0
+        isPrivate = 0 
+        if requestData.getlist('isPrivate') != []:
+            isPrivate = 1
         bio = requestData["bio"]
 
         try:
@@ -133,13 +135,19 @@ def upload_image():
         image_file = request.files.get("imageToUpload", "")
         image_name = image_file.filename
         filepath = os.path.join(IMAGES_DIR, image_name)
-        image_file.save(filepath)
-        query = "INSERT INTO photo (timestamp, filePath) VALUES (%s, %s)"
-        with connection.cursor() as cursor:
-            cursor.execute(query, (time.strftime('%Y-%m-%d %H:%M:%S'), image_name))
-            print("done");
-        message = "Image has been successfully uploaded."
-        return render_template("upload.html", message=message)
+        if request.form:
+            requestData = request.form
+            caption = requestData["caption"]
+            allFollowers = 0 
+            if requestData.getlist('allFollowers') != []:
+                allFollowers = 1
+            image_file.save(filepath)
+            query = "INSERT INTO photo (timestamp, filePath, caption, photoOwner, allFollowers) VALUES (%s, %s, %s, %s, %s)"
+            with connection.cursor() as cursor:
+                cursor.execute(query, (time.strftime('%Y-%m-%d %H:%M:%S'), image_name, caption, session["username"], allFollowers))
+                print("done");
+            message = "Image has been successfully uploaded."
+            return render_template("upload.html", message=message)
     else:
         message = "Failed to upload image."
         return render_template("upload.html", message=message)

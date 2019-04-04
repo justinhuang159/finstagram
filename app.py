@@ -13,10 +13,11 @@ IMAGES_DIR = os.path.join(os.getcwd(), "images")
 connection = pymysql.connect(host="localhost",
                              user="root",
                              password="root",
-                             db="finsta",
+                             db="finstagram",
                              charset="utf8mb4",
                              port=8889,
-                             cursorclass=pymysql.cursors.DictCursor)
+                             cursorclass=pymysql.cursors.DictCursor,
+                             autocommit=True)
 
 def login_required(f):
     @wraps(f)
@@ -96,15 +97,25 @@ def registerAuth():
         hashedPassword = hashlib.sha256(plaintextPasword.encode("utf-8")).hexdigest()
         firstName = requestData["fname"]
         lastName = requestData["lname"]
+        isPrivate = 1 if requestData.getlist('isPrivate')[0] == "on" else 0
+        bio = requestData["bio"]
 
         try:
             with connection.cursor() as cursor:
-                query = "INSERT INTO person (username, password, fname, lname) VALUES (%s, %s, %s, %s)"
-                cursor.execute(query, (username, hashedPassword, firstName, lastName))
+                query = "INSERT INTO person (username, password, fname, lname, bio, isPrivate) VALUES (%s, %s, %s, %s, %s, %s)"
+                cursor.execute(query, (username, hashedPassword, firstName, lastName, bio, isPrivate))
         except pymysql.err.IntegrityError:
             error = "%s is already taken." % (username)
             return render_template('register.html', error=error)
 
+        if request.files:
+            image_file = request.files.get("avatar", "")
+            image_name = image_file.filename
+            filepath = os.path.join(IMAGES_DIR, image_name)
+            image_file.save(filepath)
+            query = "UPDATE person SET avatar = %s WHERE username = %s"
+            with connection.cursor() as cursor:
+                cursor.execute(query, (image_name, username))
         return redirect(url_for("login"))
 
     error = "An error has occurred. Please try again."

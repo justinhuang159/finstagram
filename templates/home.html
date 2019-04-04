@@ -10,6 +10,12 @@
                 <li><a href="/upload">Upload an Image</a></li>
                 <li><a href="/logout">Logout</a></li>
             </ul>
+            <h3>Lookup a username to follow:</h3>
+            <form action="/followUser" method="post" enctype="multipart/form-data">
+                <input type="text" name="followUser" placeholder="Follow User" required/>
+                <br/>
+                <input type="submit" value="Follow">
+            </form>
         </div>
     </body>
 </html>

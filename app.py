@@ -12,10 +12,10 @@ IMAGES_DIR = os.path.join(os.getcwd(), "images")
 
 connection = pymysql.connect(host="localhost",
                              user="root",
-                             password="",
+                             password="root",
                              db="finstagram",
                              charset="utf8mb4",
-                             port=3306,
+                             port=8889,
                              cursorclass=pymysql.cursors.DictCursor,
                              autocommit=True)
 
@@ -97,7 +97,7 @@ def registerAuth():
         hashedPassword = hashlib.sha256(plaintextPasword.encode("utf-8")).hexdigest()
         firstName = requestData["fname"]
         lastName = requestData["lname"]
-        isPrivate = 0 
+        isPrivate = 0
         if requestData.getlist('isPrivate') != []:
             isPrivate = 1
         bio = requestData["bio"]
@@ -138,7 +138,7 @@ def upload_image():
         if request.form:
             requestData = request.form
             caption = requestData["caption"]
-            allFollowers = 0 
+            allFollowers = 0
             if requestData.getlist('allFollowers') != []:
                 allFollowers = 1
             image_file.save(filepath)

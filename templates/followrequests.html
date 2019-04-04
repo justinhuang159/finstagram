@@ -1,0 +1,15 @@
+<html>
+    <head>
+        Finstagram
+    </head>
+    <body>
+        <div>
+            <h2>Manage your follow requests:</h2>
+            {% for request in requests %}
+                <form action='/acceptFollow' method="post" enctype="multipart/form-data">
+                    <p>Follow request from {{request.followeeUsername}}</p>
+                </form>
+            {% endfor %}
+        </div>
+    </body>
+</html>

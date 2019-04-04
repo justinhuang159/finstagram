@@ -94,11 +94,15 @@ def followUser():
     if request.form:
         requestData = request.form
         followerUsername = requestData["followUser"]
-        with connection.cursor() as cursor:
-            query = "INSERT INTO follow (followerUsername, followeeUsername, acceptedfollow) VALUES (%s, %s, %s)"
-            cursor.execute (query, (followerUsername, session["username"], 0))
-        message = "User followed succesfully"
-        return render_template("home.html", message=message)
+        try:
+            with connection.cursor() as cursor:
+                query = "INSERT INTO follow (followerUsername, followeeUsername, acceptedfollow) VALUES (%s, %s, %s)"
+                cursor.execute (query, (followerUsername, session["username"], 0))
+            message = "Request sent successfully"
+            return render_template("home.html", message=message)
+        except:
+            message = "Error following user"
+            return render_template("home.html", message=message)
 
 
 @app.route("/registerAuth", methods=["POST"])

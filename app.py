@@ -12,10 +12,10 @@ IMAGES_DIR = os.path.join(os.getcwd(), "images")
 
 connection = pymysql.connect(host="localhost",
                              user="root",
-                             password="root",
+                             password="",
                              db="finstagram",
                              charset="utf8mb4",
-                             port=8889,
+                             port=3306,
                              cursorclass=pymysql.cursors.DictCursor,
                              autocommit=True)
 
@@ -87,6 +87,19 @@ def loginAuth():
 
     error = "An unknown error has occurred. Please try again."
     return render_template("login.html", error=error)
+
+@app.route("/followUser", methods=["POST"])
+@login_required
+def followUser():
+    if request.form:
+        requestData = request.form
+        followerUsername = requestData["followUser"]
+        with connection.cursor() as cursor:
+            query = "INSERT INTO follow (followerUsername, followeeUsername, acceptedfollow) VALUES (%s, %s, %s)"
+            cursor.execute (query, (followerUsername, session["username"], 0))
+        message = "User followed succesfully"
+        return render_template("home.html", message=message)
+
 
 @app.route("/registerAuth", methods=["POST"])
 def registerAuth():

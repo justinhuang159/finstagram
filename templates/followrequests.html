@@ -8,7 +8,10 @@
             {% for request in requests %}
                 <form action='/acceptFollow' method="post" enctype="multipart/form-data">
                     <p>Follow request from {{request.followeeUsername}}</p>
-                    
+                    <select name="Actions_{{request.followeeUsername}}">
+                        <option value="Accept">Accept</option>
+                        <option value="Decline">Decline</option>
+                    </select>
                 </form>
             {% endfor %}
         </div>

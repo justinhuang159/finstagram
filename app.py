@@ -127,13 +127,11 @@ def acceptFollow():
             with connection.cursor() as cursor:
                 if action == "accept":
                     query = "UPDATE follow SET acceptedfollow = %s WHERE followerUsername = %s AND followeeUsername = %s"
-                    cursor.execute(query, (1, followerUsername, session["username"]))
+                    cursor.execute(query, (1, followerUsername["followerUsername"], session["username"]))
                 elif action =="decline":
                     query = "DELETE FROM follow WHERE followerUsername = %s AND followeeUsername = %s"
-                    cursor.execute(query, (followerUsername, session["username"]))
-                """ cursor.execute("SELECT * FROM follow WHERE followerUsername = %s AND acceptedfollow = %s", (session["username"], 0))
-                followrequests = cursor.fetchall() """
-    return redirect(url_for("home"))
+                    cursor.execute(query, (followerUsername["followerUsername"], session["username"]))
+    return redirect(url_for("home") )
 
 
 @app.route("/registerAuth", methods=["POST"])

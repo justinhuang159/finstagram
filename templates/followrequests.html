@@ -6,8 +6,8 @@
         <div>
             <a href="/home">Home</a>
             <h2>Manage your follow requests:</h2>
-
-            <form action='/acceptFollow' method="post" enctype="multipart/form-data"></form>
+            <form action="/acceptFollow" method="post" enctype="multipart/form-data">
+                <ul>
                 {% for followrequest in followrequests %}
                     <li>
                         Follow request from: {{followrequest.followerUsername}}
@@ -16,7 +16,8 @@
                      </li>
                 {% endfor %}
                 <br>
-                <input type="submit" name = "action_submit" value="Submit">
+                <input type="submit" value="Submit">
+            </ul>
             </form>
         </div>
     </body>

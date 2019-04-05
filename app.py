@@ -104,6 +104,14 @@ def followUser():
             message = "Error following user"
             return render_template("home.html", message=message)
 
+@app.route("/followrequests", methods=["GET"])
+@login_required
+def followrequests():
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM follow WHERE followerUsername = %s", session["username"])
+        requests = cursor.fetchall()
+        return render_template('followrequests.html', requests = requests)
+
 
 @app.route("/registerAuth", methods=["POST"])
 def registerAuth():

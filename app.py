@@ -66,6 +66,15 @@ def login():
 def register():
     return render_template("register.html")
 
+@app.route("/addfriends", methods=["GET"])
+@login_required
+def addfriends():
+    query = "SELECT groupname FROM closefriendgroup WHERE groupOwner=%s"
+    with connection.cursor() as cursor:
+        cursor.execute(query, session["username"])
+    data = cursor.fetchall()
+    return render_template("addfriends.html", closefriendgroups=data)
+
 @app.route("/loginAuth", methods=["POST"])
 def loginAuth():
     if request.form:
@@ -196,6 +205,44 @@ def upload_image():
     else:
         message = "Failed to upload image."
         return render_template("upload.html", message=message)
+
+@app.route("/createGroup", methods=["POST"])
+@login_required
+def createGroup():
+    if request.form:
+        try:
+            requestData = request.form
+            groupName = requestData["groupName"]
+            with connection.cursor() as cursor:
+                query = "INSERT INTO closefriendgroup (groupName, groupOwner) VALUES (%s, %s)"
+                cursor.execute(query, (groupName, session["username"]))
+            message = "Close Friend Group successfully created!"
+            return render_template("home.html", groupmessage = message)
+        except:
+            message = "Error creating Close Friend Group"
+            return render_template("home.html", groupmessage = message)
+
+@app.route('/addfriend', methods=["POST"])
+@login_required
+def addFriend():
+    if request.form:
+        requestData = request.form
+        friend = requestData["friend"]
+        select = requestData.get("grouplist")
+        query = "INSERT INTO belong (groupName, groupOwner, username) VALUES (%s, %s, %s)"
+        fetchquery = "SELECT groupname FROM closefriendgroup WHERE groupOwner=%s"
+        with connection.cursor() as cursor:
+            cursor.execute(fetchquery, session["username"])
+        data = cursor.fetchall()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(query, (select, session["username"], friend))
+            message = "Friend successfully added to Close Friend Group!"
+            return render_template("addfriends.html", closefriendgroups=data, message=message)
+        except:
+            message = "Error adding friend into Close Friend Group!"
+            return render_template("addfriends.html", closefriendgroups=data, message=message)
+
 
 if __name__ == "__main__":
     if not os.path.isdir("images"):

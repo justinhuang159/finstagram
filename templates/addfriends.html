@@ -1,0 +1,21 @@
+<html>
+    <head>
+        <title>Finstagram</title>
+    </head>
+    <body>
+        <a href="/home">Home</a>
+        <h2>Add a friend to a Close Friend Group</h2>
+        <form action="/addfriend" method="post" enctype="multipart/form-data">
+            <input type="text" name="friend" placeholder="Friend's username">
+            <select name="grouplist">
+                {% for group in closefriendgroups %}
+                <option value="{{group.groupname}}">{{group.groupname}}</option>
+                {% endfor %}
+            </select>
+            <input type="submit" value="Add Friend">
+        </form>
+        {% if message %}
+            {{ message }}
+        {% endif %}
+    </body>
+</html>

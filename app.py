@@ -96,7 +96,7 @@ def followUser():
         followerUsername = requestData["followUser"]
         try:
             with connection.cursor() as cursor:
-                query = "INSERT INTO follow (followerUsername, followeeUsername, acceptedfollow) VALUES (%s, %s, %s)"
+                query = "INSERT INTO follow (followeeUsername, followerUsername, acceptedfollow) VALUES (%s, %s, %s)"
                 cursor.execute (query, (followerUsername, session["username"], 0))
             message = "Request sent successfully"
             return render_template("home.html", message=message)
@@ -108,9 +108,28 @@ def followUser():
 @login_required
 def followrequests():
     with connection.cursor() as cursor:
-        cursor.execute("SELECT * FROM follow WHERE followerUsername = %s", session["username"])
-        requests = cursor.fetchall()
-        return render_template('followrequests.html', requests = requests)
+        cursor.execute("SELECT * FROM follow WHERE followeeUsername = %s AND acceptedfollow = %s", (session["username"], 0))
+        followrequests = cursor.fetchall()
+        return render_template('followrequests.html', followrequests = followrequests)
+
+@app.route("/acceptFollow", methods=["POST"])
+@login_required
+def acceptFollow():
+    if request.form:
+        requestData = request.form
+        for key in requestData:
+            followerUsername = key.strip("action")
+            action = followerUsername[key]
+            with connection.cursor() as cursor:
+                if key == "accept":
+                    query = "UPDATE follow SET acceptedfollow = %s WHERE followerUsername = %s AND followeeUsername = %s"
+                    cursor.execute(query, (1, followerUsername, session["username"]))
+                elif key =="decline":
+                    query = "DELETE FROM follow WHERE followerUsername = %s AND followeeUsername = %s"
+                    cursor.execute(query, (followerUsername, session["username"]))
+                cursor.execute("SELECT * FROM follow WHERE followerUsername = %s AND acceptedfollow = %s", (session["username"], 0))
+                followrequests = cursor.fetchall()
+        return render_template('followrequests.html', followrequests = followrequests)
 
 
 @app.route("/registerAuth", methods=["POST"])
@@ -126,7 +145,6 @@ def registerAuth():
         if requestData.getlist('isPrivate') != []:
             isPrivate = 1
         bio = requestData["bio"]
-
         try:
             with connection.cursor() as cursor:
                 query = "INSERT INTO person (username, password, fname, lname, bio, isPrivate) VALUES (%s, %s, %s, %s, %s, %s)"

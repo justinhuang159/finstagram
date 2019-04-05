@@ -4,16 +4,20 @@
     </head>
     <body>
         <div>
+            <a href="/home">Home</a>
             <h2>Manage your follow requests:</h2>
-            {% for request in requests %}
-                <form action='/acceptFollow' method="post" enctype="multipart/form-data">
-                    <p>Follow request from {{request.followeeUsername}}</p>
-                    <select name="Actions_{{request.followeeUsername}}">
-                        <option value="Accept">Accept</option>
-                        <option value="Decline">Decline</option>
-                    </select>
-                </form>
-            {% endfor %}
+
+            <form action='/acceptFollow' method="post" enctype="multipart/form-data"></form>
+                {% for followrequest in followrequests %}
+                    <li>
+                        Follow request from: {{followrequest.followerUsername}}
+                        <input type="radio" name="action{{followrequest.followerUsername}}" value="accept" checked> Accept
+                        <input type="radio" name="action{{followrequest.followerUsername}}" value="decline"> Decline   
+                     </li>
+                {% endfor %}
+                <br>
+                <input type="submit" name = "action_submit" value="Submit">
+            </form>
         </div>
     </body>
 </html>

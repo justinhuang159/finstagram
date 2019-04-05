@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, session, redirect, url_for, send_file
+import sys
 import os
 import uuid
 import hashlib
@@ -200,6 +201,11 @@ def upload_image():
             with connection.cursor() as cursor:
                 cursor.execute(query, (time.strftime('%Y-%m-%d %H:%M:%S'), image_name, caption, session["username"], allFollowers))
                 print("done");
+                if allFollowers == 0:
+                    photoID = cursor.lastrowid
+                    cursor.execute("SELECT groupName FROM closefriendgroup WHERE groupOWNER=%s", session["username"])
+                    groupData = cursor.fetchall()
+                    return render_template("upload.html", allFollowers = False, photoID = photoID, groupData = groupData)
             message = "Image has been successfully uploaded."
             return render_template("upload.html", message=message)
     else:
@@ -243,7 +249,27 @@ def addFriend():
             message = "Error adding friend into Close Friend Group!"
             return render_template("addfriends.html", closefriendgroups=data, message=message)
 
-
+@app.route('/assignGroups', methods=["POST"])
+@login_required
+def assignGroups():
+    if request.form:
+        requestData = request.form
+        for group in requestData:
+            print(group, file=sys.stderr)
+            selected = 0
+            if requestData.getlist(group) != []:
+                selected = 1
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT MAX(photoID) FROM photo WHERE allFollowers=0")
+                photoID = cursor.fetchall()
+                photoID=photoID[0]["MAX(photoID)"]
+                print(photoID, file=sys.stderr)
+            if selected == 1:
+                with connection.cursor() as cursor:
+                    query = ("INSERT INTO share (groupName, groupOwner, photoID) VALUES (%s, %s, %s)")
+                    cursor.execute(query, (group, session["username"], photoID))
+        message = "Image has been successfully uploaded."
+        return render_template("upload.html", message=message)
 if __name__ == "__main__":
     if not os.path.isdir("images"):
         os.mkdir(IMAGES_DIR)

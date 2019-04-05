@@ -12,13 +12,22 @@
                 <br/>
                 <input type="checkbox" name="allFollowers"> All Followers?
                 <br/>
-                <input type="text" name="closeFriendGroup" placeholder="Group Name">
-                <br/>
                 <input type="submit" value="Upload">
             </form>
         </div>
         {% if message %}
             {{ message }}
+        {% endif %}
+
+        {% if allFollowers==False %}
+            <form action="/assignGroups" method="post" enctype="multipart/form-data">
+                <h3>Share which of the following Close Friend Groups?</h3>
+                {% for group in groupData %}
+                    <input type="checkbox" name="{{group.groupName}}">{{group.groupName}}
+                {% endfor %}
+                <input type="submit" value="Share Photo">
+            </form>
+
         {% endif %}
         <br/>
         <a href="/">Go back</a>

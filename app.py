@@ -116,20 +116,24 @@ def followrequests():
 @login_required
 def acceptFollow():
     if request.form:
-        requestData = request.form
-        for key in requestData:
-            followerUsername = key.strip("action")
-            action = followerUsername[key]
+        followeeUsername = session["username"]
+        query = "SELECT followerUsername FROM follow WHERE followeeUsername=%s AND acceptedfollow=%s"
+        with connection.cursor() as cursor: 
+            cursor.execute(query, (followeeUsername, 0))
+        data = cursor.fetchall()
+
+        for followerUsername in data:
+            action = request.form["action" + followerUsername["followerUsername"]]
             with connection.cursor() as cursor:
-                if key == "accept":
+                if action == "accept":
                     query = "UPDATE follow SET acceptedfollow = %s WHERE followerUsername = %s AND followeeUsername = %s"
                     cursor.execute(query, (1, followerUsername, session["username"]))
-                elif key =="decline":
+                elif action =="decline":
                     query = "DELETE FROM follow WHERE followerUsername = %s AND followeeUsername = %s"
                     cursor.execute(query, (followerUsername, session["username"]))
-                cursor.execute("SELECT * FROM follow WHERE followerUsername = %s AND acceptedfollow = %s", (session["username"], 0))
-                followrequests = cursor.fetchall()
-        return render_template('followrequests.html', followrequests = followrequests)
+                """ cursor.execute("SELECT * FROM follow WHERE followerUsername = %s AND acceptedfollow = %s", (session["username"], 0))
+                followrequests = cursor.fetchall() """
+    return redirect(url_for("home"))
 
 
 @app.route("/registerAuth", methods=["POST"])

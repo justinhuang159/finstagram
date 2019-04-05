@@ -260,7 +260,7 @@ def assignGroups():
             if requestData.getlist(group) != []:
                 selected = 1
             with connection.cursor() as cursor:
-                cursor.execute("SELECT MAX(photoID) FROM photo WHERE allFollowers=0")
+                cursor.execute("SELECT MAX(photoID) FROM photo WHERE allFollowers=0 AND photoOwner=%s", session["username"])
                 photoID = cursor.fetchall()
                 photoID=photoID[0]["MAX(photoID)"]
                 print(photoID, file=sys.stderr)

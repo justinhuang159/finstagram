@@ -47,9 +47,9 @@ def upload():
 @app.route("/images", methods=["GET"])
 @login_required
 def images():
-    query = "SELECT * FROM photo"
+    query = "SELECT * FROM photo WHERE allFollowers = 1 OR photoOwner = %s OR photoID in (SELECT photoID FROM share NATURAL JOIN belong WHERE belong.username = %s AND share.groupName = belong.groupName) ORDER BY timestamp desc"
     with connection.cursor() as cursor:
-        cursor.execute(query)
+        cursor.execute(query, (session["username"], session["username"]))
     data = cursor.fetchall()
     return render_template("images.html", images=data)
 

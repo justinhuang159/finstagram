@@ -8,6 +8,9 @@
             {% for image in images %}
 
             <img src="/image/{{image.filePath}}" width="300"/>
+            <p>Caption: {{image.caption}}</p>
+            <p>Image ID: {{image.photoID}} Photo Owner: {{image.photoOwner}}</p>
+            <br>
             {% endfor %}
         </div>
         <a href="/">Go back</a>

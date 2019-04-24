@@ -13,10 +13,10 @@ IMAGES_DIR = os.path.join(os.getcwd(), "images")
 
 connection = pymysql.connect(host="localhost",
                              user="root",
-                             password="root",
+                             password="",
                              db="finstagram",
                              charset="utf8mb4",
-                             port=8889,
+                             port=3306,
                              cursorclass=pymysql.cursors.DictCursor,
                              autocommit=True)
 
@@ -407,7 +407,7 @@ def createGroup():
             with connection.cursor() as cursor:
                 query = "INSERT INTO closefriendgroup (groupName, groupOwner) VALUES (%s, %s)"
                 cursor.execute(query, (groupName, session["username"]))
-                query = "INSERT INTO belong (groupname, groupOwner) VALUES (%s, %s, %s)"
+                query = "INSERT INTO belong (groupname, groupOwner, username) VALUES (%s, %s, %s)"
                 cursor.execute(query, (groupName, session["username"], session["username"]))
             message = "Close Friend Group successfully created!"
             return render_template("home.html", groupmessage = message)

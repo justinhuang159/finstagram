@@ -53,7 +53,9 @@ def images():
         data = cursor.fetchall()
         cursor.execute("SELECT * FROM tag NATURAL JOIN person WHERE acceptedTag = 1")
         tags = cursor.fetchall()
-    return render_template("images.html", images=data, tags=tags)
+        cursor.execute("SELECT * FROM comment")
+        comments = cursor.fetchall()
+    return render_template("images.html", images=data, tags=tags, comments=comments)
 
 @app.route("/image/<image_name>", methods=["GET"])
 def image(image_name):
@@ -81,15 +83,21 @@ def tagUser():
             try:
                 with connection.cursor() as cursor:
                     query = "INSERT INTO tag (username, photoID, acceptedTag) VALUES (%s, %s, %s)"
-                    cursor.execute(query, (taggedUsername, photoID, 0))
+                    if taggedUsername == session["username"]:
+                        cursor.execute(query, (taggedUsername, photoID, 1))
+                    else:
+                        cursor.execute(query, (taggedUsername, photoID, 0))
                     query = "SELECT * FROM photo WHERE allFollowers = 1 OR photoOwner = %s OR photoID in (SELECT photoID FROM share NATURAL JOIN belong WHERE belong.username = %s AND share.groupName = belong.groupName) ORDER BY timestamp desc"
                     cursor.execute(query, (session["username"], session["username"]))
                     data = cursor.fetchall()
                     cursor.execute("SELECT * FROM tag NATURAL JOIN person WHERE acceptedTag = 1")
                     tags = cursor.fetchall()
-                return render_template("images.html", images=data, tags=tags)
+                    cursor.execute("SELECT * FROM comment")
+                    comments = cursor.fetchall()
+                return render_template("images.html", images=data, tags=tags, comments=comments)
             except:
-                return render_template("home.html")
+                pass
+            return render_template("home.html")
 
 @app.route("/addfriends", methods=["GET"])
 @login_required
@@ -99,6 +107,25 @@ def addfriends():
         cursor.execute(query, session["username"])
     data = cursor.fetchall()
     return render_template("addfriends.html", closefriendgroups=data)
+
+@app.route("/comment", methods=["POST"])
+@login_required
+def comment():
+    if request.form:
+        requestData = request.form
+        for photoID in requestData:
+            text = requestData[photoID]
+            with connection.cursor() as cursor:
+                query = "INSERT INTO comment (username, photoID, commentText, timestamp) VALUES (%s, %s, %s, %s)"
+                cursor.execute(query, (session["username"], photoID, text, time.strftime('%Y-%m-%d %H:%M:%S')))
+                query = "SELECT * FROM photo WHERE allFollowers = 1 OR photoOwner = %s OR photoID in (SELECT photoID FROM share NATURAL JOIN belong WHERE belong.username = %s AND share.groupName = belong.groupName) ORDER BY timestamp desc"
+                cursor.execute(query, (session["username"], session["username"]))
+                data = cursor.fetchall()
+                cursor.execute("SELECT * FROM tag NATURAL JOIN person WHERE acceptedTag = 1")
+                tags = cursor.fetchall()
+                cursor.execute("SELECT * FROM comment")
+                comments = cursor.fetchall()
+            return render_template("images.html", images=data, tags=tags, comments=comments)
 
 @app.route("/loginAuth", methods=["POST"])
 def loginAuth():

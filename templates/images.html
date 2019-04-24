@@ -23,8 +23,20 @@
                 {% endfor %}
                 </ul>
             </p>
+            <div>
+            <p>Comments:</p>
+            {% for comment in comments %}
+                {% if comment.photoID == image.photoID %}
+                    <p>{{comment.timestamp}} {{comment.username}}: {{comment.commentText}}</p>
+                {% endif %}
+            {% endfor %}
+            <form action="/comment" method="post" enctype="multipart/form-data">
+                <input type="text" name="{{image.photoID}}" placeholder="Comment">
+                <input type="submit" value="Post Comment">
+            </form>
             <br/>
             {% endfor %}
+            </div>
         </div>
         <a href="/">Go back</a>
     </body>

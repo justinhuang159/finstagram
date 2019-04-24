@@ -1,0 +1,20 @@
+<html>
+    <head>
+        <title>Followers and Following</title>
+    </head>
+    <body>
+        <h3>Followers</h3>
+        <ul>
+            {% for follower in followers %}
+                <li>{{follower.followerUsername}}</li>
+            {% endfor %}
+        </ul>
+        <hr>
+        <h3>Following</h3>
+        <ul>
+            {% for follower in following %}
+                <li>{{follower.followeeUsername}}</li>
+            {% endfor %}
+        </ul>
+    </body>
+</html>

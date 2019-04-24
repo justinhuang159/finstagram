@@ -8,11 +8,19 @@
             <ul>
                 <li><a href="/images">View Images</a></li>
                 <li><a href="/upload">Upload an Image</a></li>
+                <li><a href="/followsInfo">Followers & Following</a></li>
                 <li><a href="/followrequests">Manage Follow Requests</a></li>
                 <li><a href="/tagrequests">Manage Tag Requests</a></li>
+                <li><a href="/groups">Manage Groups</a></li>
                 <li><a href="/addfriends">Add a Friend to Group</a></li>
                 <li><a href="/logout">Logout</a></li>
             </ul>
+            <h3>Search:</h3>
+            <form action="/search" method="post">
+                <input type="text" name="searchQuery" placeholder="Search" required/>
+                <input type="submit" value="Search">
+            </form>
+            
             <h3>Lookup a username to follow:</h3>
             <form action="/followUser" method="post" enctype="multipart/form-data">
                 <input type="text" name="followUser" placeholder="Follow User" required/>

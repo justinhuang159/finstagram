@@ -1,0 +1,20 @@
+<html>
+    <head>
+        <title>{{user.username}}</title>
+    </head>
+    <body style="margin: 30px">
+        <img src="/image/{{user.avatar}}" width="150px" style="border-radius: 50%"><br/>
+        <h2>{{user.username}}</h2> 
+        <h4>{{user.bio}}</h4><br/>
+        <h3><b>Images</b></h3>
+        <hr>
+        <div>
+            {% for photo in photos %}
+                <img src="/image/{{photo.filePath}}" width="200px">
+            {% endfor %}
+        </div>
+        {% if error %}
+            {{ error }}
+        {% endif %}
+    </body>
+</html>

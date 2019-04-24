@@ -44,6 +44,20 @@ def home():
 def upload():
     return render_template("upload.html")
 
+@app.route("/search", methods=["POST"])
+@login_required
+def search():
+    searchQuery = request.form["searchQuery"]
+    query = "SELECT * FROM person WHERE username = %s"
+    with connection.cursor() as cursor:
+        cursor.execute(query, searchQuery)
+    users = cursor.fetchall()
+    query = "SELECT * FROM photo WHERE (allFollowers = 1 OR photoOwner = %s OR photoID in (SELECT photoID FROM share NATURAL JOIN belong WHERE belong.username = %s AND share.groupName = belong.groupName)) AND caption LIKE %s"
+    with connection.cursor() as cursor:
+        cursor.execute(query, (session["username"], session["username"], searchQuery))
+    photos = cursor.fetchall()
+    return render_template("searchResults.html", searchQuery=searchQuery, users=users, photos=photos)
+
 @app.route("/images", methods=["GET"])
 @login_required
 def images():
@@ -58,6 +72,53 @@ def image(image_name):
     image_location = os.path.join(IMAGES_DIR, image_name)
     if os.path.isfile(image_location):
         return send_file(image_location, mimetype="image/jpg")
+
+@app.route("/user/<user_name>", methods=["GET"])
+def user(user_name):
+    # check to see if the user is private
+    query = "SELECT isPrivate FROM person WHERE username = %s"
+    with connection.cursor() as cursor:
+        cursor.execute(query, user_name)
+    private = True if cursor.fetchone()["isPrivate"] == 1 else False
+    if private:
+        # check to see if current user is following that user
+        query = "SELECT * FROM follow WHERE followerUsername = %s AND followeeUsername = %s"
+        with connection.cursor() as cursor:
+            cursor.execute(query, (session["username"], user_name))
+        following = True if cursor.fetchone() else False
+        if not following:
+            error = "You're not following this user"
+            return render_template("error.html", error=error)
+    current_user = session["username"]
+    query = "SELECT * FROM person WHERE username = %s"
+    with connection.cursor() as cursor:
+        cursor.execute(query, user_name)
+    user = cursor.fetchone()
+    query = "SELECT * FROM photo WHERE photoOwner = %s AND allFollowers = 1"
+    photos = []
+    with connection.cursor() as cursor:
+        cursor.execute(query, user_name)
+    temp_photos = cursor.fetchall()
+    photos.extend(temp_photos)
+    query = "SELECT * FROM photo WHERE photoOwner = %s AND allFollowers = 0 AND photoID in (SELECT photoID FROM share NATURAL JOIN belong WHERE belong.username = %s AND share.groupOwner = belong.groupOwner)"
+    with connection.cursor() as cursor:
+        cursor.execute(query, (user_name, current_user))
+    temp_photos = cursor.fetchall()
+    photos.extend(temp_photos)
+    return render_template("profile.html", user=user, photos=photos)
+
+@app.route("/followsInfo", methods=["GET"])
+def followInfo():
+    current_user = session["username"]
+    query = "SELECT * FROM follow WHERE followerUsername = %s"
+    with connection.cursor() as cursor:
+        cursor.execute(query, current_user)
+    following = cursor.fetchall()
+    query = "SELECT * FROM follow WHERE followeeUsername = %s"
+    with connection.cursor() as cursor:
+        cursor.execute(query, current_user)
+    followers = cursor.fetchall()
+    return render_template("follows.html", followers=followers, following=following)
 
 @app.route("/login", methods=["GET"])
 def login():
@@ -253,6 +314,53 @@ def createGroup():
         except:
             message = "Error creating Close Friend Group"
             return render_template("home.html", groupmessage = message)
+
+@app.route("/groups", methods=["GET"])
+@login_required
+def groups():
+    current_user = session["username"]
+    query = "SELECT * FROM CloseFriendGroup WHERE groupOwner = %s"
+    with connection.cursor() as cursor:
+        cursor.execute(query, current_user)
+    owned_groups = cursor.fetchall()
+    query = "SELECT * FROM Belong WHERE username = %s AND groupOwner != %s"
+    with connection.cursor() as cursor:
+        cursor.execute(query, (current_user, current_user))
+    in_groups = cursor.fetchall()
+    return render_template("groups.html", owned=owned_groups, in_groups=in_groups)
+
+@app.route("/deleteGroup", methods=["POST"])
+@login_required
+def deleteGroup():
+    if request.form:
+        group_to_delete = request.form["groupName"]
+        # delete all users
+        query = "DELETE FROM belong WHERE groupName = %s"
+        with connection.cursor() as cursor:
+            cursor.execute(query, group_to_delete)
+        # delete all shares
+        query = "DELETE FROM share WHERE groupName = %s"
+        with connection.cursor() as cursor:
+            cursor.execute(query, group_to_delete)
+        # delete group
+        query = "DELETE FROM CloseFriendGroup WHERE groupName = %s"
+        with connection.cursor() as cursor:
+            cursor.execute(query, group_to_delete)
+        return redirect(url_for("groups"))
+    return render_template("error.html", error="Error")
+
+
+@app.route("/leaveGroup", methods=["POST"])
+@login_required
+def leaveGroup():
+    if request.form:
+        current_user = session["username"]
+        group_to_leave = request.form["groupName"]
+        query = "DELETE FROM belong WHERE groupName = %s AND username = %s"
+        with connection.cursor() as cursor:
+            cursor.execute(query, (group_to_leave, current_user))
+        return redirect(url_for("groups"))
+    return render_template("error.html", error="Error")
 
 @app.route('/addfriend', methods=["POST"])
 @login_required

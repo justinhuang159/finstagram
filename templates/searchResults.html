@@ -1,0 +1,20 @@
+<html>
+    <head>
+        <title>{{searchQuery}}</title>
+    </head>
+    <body>
+        <h3>Users</h3>
+        <ul>
+            {% for user in users %}
+                <li><a href="/user/{{user.username}}">{{user.username}}</a></li>
+            {% endfor %}
+        </ul>
+        <hr>
+        <h3>Images</h3>
+        <div>
+            {% for photo in photos %}
+                <img src="/image/{{photo.filePath}}" width="200px">
+            {% endfor %}
+        </div>
+    </body>
+</html>

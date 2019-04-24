@@ -144,7 +144,6 @@ def tagUser():
         for name in requestData:
             photoID = name.strip("taggedUser")
             taggedUsername = requestData[name]
-            # print(taggedUsername, file=sys.stderr)
             try:
                 with connection.cursor() as cursor:
                     query = "INSERT INTO tag (username, photoID, acceptedTag) VALUES (%s, %s, %s)"

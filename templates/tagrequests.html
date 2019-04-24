@@ -1,0 +1,25 @@
+<html>
+    <head>
+        <title>Finstagram</title>
+    </head>
+    <body>
+        <div>
+            <a href="/home">Home</a>
+            <h2>Manage your tag requests:</h2>
+            <form action="/acceptTag" method="post" enctype="multipart/form-data">
+                <ul>
+                {% for tagrequest in tagrequests %}
+                    <li>
+                        Tagged in: {{tagrequest.photoID}}
+                        <input type="radio" name="action{{tagrequest.photoID}}" value="accept" checked> Accept
+                        <input type="radio" name="action{{tagrequest.photoID}}" value="decline"> Decline  
+                        <input type="radio" name="action{{tagrequest.photoID}}" value="ignore"> Ignore  
+                     </li>
+                {% endfor %}
+                <br>
+                <input type="submit" value="Submit">
+            </ul>
+            </form>
+        </div>
+    </body>
+</html>

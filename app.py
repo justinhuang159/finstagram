@@ -13,10 +13,10 @@ IMAGES_DIR = os.path.join(os.getcwd(), "images")
 
 connection = pymysql.connect(host="localhost",
                              user="root",
-                             password="",
+                             password="root",
                              db="finstagram",
                              charset="utf8mb4",
-                             port=3306,
+                             port=8889,
                              cursorclass=pymysql.cursors.DictCursor,
                              autocommit=True)
 
@@ -90,7 +90,7 @@ def user(user_name):
         with connection.cursor() as cursor:
             cursor.execute(query, (session["username"], user_name))
         following = True if cursor.fetchone() else False
-        if not following:
+        if not following and session["username"] != user_name:
             error = "You're not following this user"
             return render_template("error.html", error=error)
     current_user = session["username"]
@@ -140,7 +140,7 @@ def tagUser():
         for name in requestData:
             photoID = name.strip("taggedUser")
             taggedUsername = requestData[name]
-            print(taggedUsername, file=sys.stderr)
+            # print(taggedUsername, file=sys.stderr)
             try:
                 with connection.cursor() as cursor:
                     query = "INSERT INTO tag (username, photoID, acceptedTag) VALUES (%s, %s, %s)"
@@ -319,7 +319,7 @@ def acceptTag():
         for tag in data:
             action = data[tag]
             photoID = tag.strip("action")
-            print(photoID, file=sys.stderr)
+            # print(photoID, file=sys.stderr)
             with connection.cursor() as cursor:
                 if action == "accept":
                     query = "UPDATE tag SET acceptedtag = %s WHERE photoID=%s AND username=%s"
@@ -442,7 +442,7 @@ def assignGroups():
     if request.form:
         requestData = request.form
         for group in requestData:
-            print(group, file=sys.stderr)
+            # print(group, file=sys.stderr)
             selected = 0
             if requestData.getlist(group) != []:
                 selected = 1
@@ -450,7 +450,7 @@ def assignGroups():
                 cursor.execute("SELECT MAX(photoID) FROM photo WHERE allFollowers=0 AND photoOwner=%s", session["username"])
                 photoID = cursor.fetchall()
                 photoID=photoID[0]["MAX(photoID)"]
-                print(photoID, file=sys.stderr)
+                # print(photoID, file=sys.stderr)
             if selected == 1:
                 with connection.cursor() as cursor:
                     query = ("INSERT INTO share (groupName, groupOwner, photoID) VALUES (%s, %s, %s)")

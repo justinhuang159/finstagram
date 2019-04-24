@@ -64,8 +64,12 @@ def images():
     query = "SELECT * FROM photo WHERE allFollowers = 1 OR photoOwner = %s OR photoID in (SELECT photoID FROM share NATURAL JOIN belong WHERE belong.username = %s AND share.groupName = belong.groupName) ORDER BY timestamp desc"
     with connection.cursor() as cursor:
         cursor.execute(query, (session["username"], session["username"]))
-    data = cursor.fetchall()
-    return render_template("images.html", images=data)
+        data = cursor.fetchall()
+        cursor.execute("SELECT * FROM tag NATURAL JOIN person WHERE acceptedTag = 1")
+        tags = cursor.fetchall()
+        cursor.execute("SELECT * FROM comment")
+        comments = cursor.fetchall()
+    return render_template("images.html", images=data, tags=tags, comments=comments)
 
 @app.route("/image/<image_name>", methods=["GET"])
 def image(image_name):
@@ -128,6 +132,81 @@ def login():
 def register():
     return render_template("register.html")
 
+@app.route("/tagUser", methods=["POST"])
+@login_required
+def tagUser():
+    if request.form:
+        requestData = request.form
+        for name in requestData:
+            photoID = name.strip("taggedUser")
+            taggedUsername = requestData[name]
+            print(taggedUsername, file=sys.stderr)
+            try:
+                with connection.cursor() as cursor:
+                    query = "INSERT INTO tag (username, photoID, acceptedTag) VALUES (%s, %s, %s)"
+                    if taggedUsername == session["username"]:
+                        cursor.execute(query, (taggedUsername, photoID, 1))
+                    else:
+                        cursor.execute(query, (taggedUsername, photoID, 0))
+                    query = "SELECT * FROM photo WHERE allFollowers = 1 OR photoOwner = %s OR photoID in (SELECT photoID FROM share NATURAL JOIN belong WHERE belong.username = %s AND share.groupName = belong.groupName) ORDER BY timestamp desc"
+                    cursor.execute(query, (session["username"], session["username"]))
+                    data = cursor.fetchall()
+                    cursor.execute("SELECT * FROM tag NATURAL JOIN person WHERE acceptedTag = 1")
+                    tags = cursor.fetchall()
+                    cursor.execute("SELECT * FROM comment")
+                    comments = cursor.fetchall()
+                return render_template("images.html", images=data, tags=tags, comments=comments)
+            except:
+                pass
+            return render_template("home.html")
+
+@app.route("/groups", methods=["GET"])
+@login_required
+def groups():
+    current_user = session["username"]
+    query = "SELECT * FROM CloseFriendGroup WHERE groupOwner = %s"
+    with connection.cursor() as cursor:
+        cursor.execute(query, current_user)
+    owned_groups = cursor.fetchall()
+    query = "SELECT * FROM Belong WHERE username = %s AND groupOwner != %s"
+    with connection.cursor() as cursor:
+        cursor.execute(query, (current_user, current_user))
+    in_groups = cursor.fetchall()
+    return render_template("groups.html", owned=owned_groups, in_groups=in_groups)
+
+@app.route("/deleteGroup", methods=["POST"])
+@login_required
+def deleteGroup():
+    if request.form:
+        group_to_delete = request.form["groupName"]
+        # delete all users
+        query = "DELETE FROM belong WHERE groupName = %s"
+        with connection.cursor() as cursor:
+            cursor.execute(query, group_to_delete)
+        # delete all shares
+        query = "DELETE FROM share WHERE groupName = %s"
+        with connection.cursor() as cursor:
+            cursor.execute(query, group_to_delete)
+        # delete group
+        query = "DELETE FROM CloseFriendGroup WHERE groupName = %s"
+        with connection.cursor() as cursor:
+            cursor.execute(query, group_to_delete)
+        return redirect(url_for("groups"))
+    return render_template("error.html", error="Error")
+
+
+@app.route("/leaveGroup", methods=["POST"])
+@login_required
+def leaveGroup():
+    if request.form:
+        current_user = session["username"]
+        group_to_leave = request.form["groupName"]
+        query = "DELETE FROM belong WHERE groupName = %s AND username = %s"
+        with connection.cursor() as cursor:
+            cursor.execute(query, (group_to_leave, current_user))
+        return redirect(url_for("groups"))
+    return render_template("error.html", error="Error")
+
 @app.route("/addfriends", methods=["GET"])
 @login_required
 def addfriends():
@@ -136,6 +215,25 @@ def addfriends():
         cursor.execute(query, session["username"])
     data = cursor.fetchall()
     return render_template("addfriends.html", closefriendgroups=data)
+
+@app.route("/comment", methods=["POST"])
+@login_required
+def comment():
+    if request.form:
+        requestData = request.form
+        for photoID in requestData:
+            text = requestData[photoID]
+            with connection.cursor() as cursor:
+                query = "INSERT INTO comment (username, photoID, commentText, timestamp) VALUES (%s, %s, %s, %s)"
+                cursor.execute(query, (session["username"], photoID, text, time.strftime('%Y-%m-%d %H:%M:%S')))
+                query = "SELECT * FROM photo WHERE allFollowers = 1 OR photoOwner = %s OR photoID in (SELECT photoID FROM share NATURAL JOIN belong WHERE belong.username = %s AND share.groupName = belong.groupName) ORDER BY timestamp desc"
+                cursor.execute(query, (session["username"], session["username"]))
+                data = cursor.fetchall()
+                cursor.execute("SELECT * FROM tag NATURAL JOIN person WHERE acceptedTag = 1")
+                tags = cursor.fetchall()
+                cursor.execute("SELECT * FROM comment")
+                comments = cursor.fetchall()
+            return render_template("images.html", images=data, tags=tags, comments=comments)
 
 @app.route("/loginAuth", methods=["POST"])
 def loginAuth():
@@ -189,7 +287,7 @@ def acceptFollow():
     if request.form:
         followeeUsername = session["username"]
         query = "SELECT followerUsername FROM follow WHERE followeeUsername=%s AND acceptedfollow=%s"
-        with connection.cursor() as cursor: 
+        with connection.cursor() as cursor:
             cursor.execute(query, (followeeUsername, 0))
         data = cursor.fetchall()
 
@@ -309,58 +407,13 @@ def createGroup():
             with connection.cursor() as cursor:
                 query = "INSERT INTO closefriendgroup (groupName, groupOwner) VALUES (%s, %s)"
                 cursor.execute(query, (groupName, session["username"]))
+                query = "INSERT INTO belong (groupname, groupOwner) VALUES (%s, %s, %s)"
+                cursor.execute(query, (groupName, session["username"], session["username"]))
             message = "Close Friend Group successfully created!"
             return render_template("home.html", groupmessage = message)
         except:
             message = "Error creating Close Friend Group"
             return render_template("home.html", groupmessage = message)
-
-@app.route("/groups", methods=["GET"])
-@login_required
-def groups():
-    current_user = session["username"]
-    query = "SELECT * FROM CloseFriendGroup WHERE groupOwner = %s"
-    with connection.cursor() as cursor:
-        cursor.execute(query, current_user)
-    owned_groups = cursor.fetchall()
-    query = "SELECT * FROM Belong WHERE username = %s AND groupOwner != %s"
-    with connection.cursor() as cursor:
-        cursor.execute(query, (current_user, current_user))
-    in_groups = cursor.fetchall()
-    return render_template("groups.html", owned=owned_groups, in_groups=in_groups)
-
-@app.route("/deleteGroup", methods=["POST"])
-@login_required
-def deleteGroup():
-    if request.form:
-        group_to_delete = request.form["groupName"]
-        # delete all users
-        query = "DELETE FROM belong WHERE groupName = %s"
-        with connection.cursor() as cursor:
-            cursor.execute(query, group_to_delete)
-        # delete all shares
-        query = "DELETE FROM share WHERE groupName = %s"
-        with connection.cursor() as cursor:
-            cursor.execute(query, group_to_delete)
-        # delete group
-        query = "DELETE FROM CloseFriendGroup WHERE groupName = %s"
-        with connection.cursor() as cursor:
-            cursor.execute(query, group_to_delete)
-        return redirect(url_for("groups"))
-    return render_template("error.html", error="Error")
-
-
-@app.route("/leaveGroup", methods=["POST"])
-@login_required
-def leaveGroup():
-    if request.form:
-        current_user = session["username"]
-        group_to_leave = request.form["groupName"]
-        query = "DELETE FROM belong WHERE groupName = %s AND username = %s"
-        with connection.cursor() as cursor:
-            cursor.execute(query, (group_to_leave, current_user))
-        return redirect(url_for("groups"))
-    return render_template("error.html", error="Error")
 
 @app.route('/addfriend', methods=["POST"])
 @login_required

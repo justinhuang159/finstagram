@@ -158,11 +158,12 @@ def acceptTag():
         username = session["username"]
         data = request.form
         for tag in data:
-            action = data
+            action = data[tag]
             photoID = tag.strip("action")
+            print(photoID, file=sys.stderr)
             with connection.cursor() as cursor:
                 if action == "accept":
-                    query = "UPDATE tag SET acceptedfollow = %s WHERE photoID=%s AND username=%s"
+                    query = "UPDATE tag SET acceptedtag = %s WHERE photoID=%s AND username=%s"
                     cursor.execute(query, (1, photoID, username))
                 elif action == "decline":
                     query = "DELETE FROM tag WHERE photoID = %s AND username = %s"

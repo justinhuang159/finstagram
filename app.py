@@ -51,7 +51,7 @@ def images():
     with connection.cursor() as cursor:
         cursor.execute(query, (session["username"], session["username"]))
         data = cursor.fetchall()
-        cursor.execute("SELECT * FROM tag WHERE acceptedTag = 1")
+        cursor.execute("SELECT * FROM tag NATURAL JOIN person WHERE acceptedTag = 1")
         tags = cursor.fetchall()
     return render_template("images.html", images=data, tags=tags)
 
@@ -85,7 +85,7 @@ def tagUser():
                     query = "SELECT * FROM photo WHERE allFollowers = 1 OR photoOwner = %s OR photoID in (SELECT photoID FROM share NATURAL JOIN belong WHERE belong.username = %s AND share.groupName = belong.groupName) ORDER BY timestamp desc"
                     cursor.execute(query, (session["username"], session["username"]))
                     data = cursor.fetchall()
-                    cursor.execute("SELECT * FROM tag WHERE acceptedTag = 1")
+                    cursor.execute("SELECT * FROM tag NATURAL JOIN person WHERE acceptedTag = 1")
                     tags = cursor.fetchall()
                 return render_template("images.html", images=data, tags=tags)
             except:

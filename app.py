@@ -69,7 +69,11 @@ def images():
         tags = cursor.fetchall()
         cursor.execute("SELECT * FROM comment")
         comments = cursor.fetchall()
-    return render_template("images.html", images=data, tags=tags, comments=comments)
+        cursor.execute("SELECT * FROM liked")
+        likes = cursor.fetchall()
+        cursor.execute("SELECT * FROM liked")
+        likes = cursor.fetchall()
+    return render_template("images.html", images=data, tags=tags, comments=comments, likes=likes)
 
 @app.route("/image/<image_name>", methods=["GET"])
 def image(image_name):
@@ -155,7 +159,9 @@ def tagUser():
                     tags = cursor.fetchall()
                     cursor.execute("SELECT * FROM comment")
                     comments = cursor.fetchall()
-                return render_template("images.html", images=data, tags=tags, comments=comments)
+                    cursor.execute("SELECT * FROM liked")
+                    likes = cursor.fetchall()
+                return render_template("images.html", images=data, tags=tags, comments=comments, likes=likes)
             except:
                 pass
             return render_template("home.html", username = session["username"])
@@ -233,7 +239,39 @@ def comment():
                 tags = cursor.fetchall()
                 cursor.execute("SELECT * FROM comment")
                 comments = cursor.fetchall()
-            return render_template("images.html", images=data, tags=tags, comments=comments)
+                cursor.execute("SELECT * FROM liked")
+                likes = cursor.fetchall()
+            return render_template("images.html", images=data, tags=tags, comments=comments, likes=likes)
+
+@app.route("/like", methods=["POST"])
+@login_required
+def like():
+    if request.form:
+        requestData = request.form
+        action, photoID = requestData.get("action").split(".")
+        print(action, file=sys.stderr)
+        print(photoID, file=sys.stderr)
+        try:
+            with connection.cursor() as cursor:
+                if action == "like":
+                    query = "INSERT INTO liked (username, photoID, timestamp) VALUES (%s, %s, %s)"
+                    cursor.execute(query, (session["username"], photoID, time.strftime('%Y-%m-%d %H:%M:%S')))
+                else:
+                    query = "DELETE FROM liked WHERE username=%s AND photoID=%s"
+                    cursor.execute(query, (session["username"], photoID))
+        except:
+            pass
+        with connection.cursor() as cursor:   
+            query = "SELECT * FROM photo WHERE allFollowers = 1 OR photoOwner = %s OR photoID in (SELECT photoID FROM share NATURAL JOIN belong WHERE belong.username = %s AND share.groupName = belong.groupName) ORDER BY timestamp desc"
+            cursor.execute(query, (session["username"], session["username"]))
+            data = cursor.fetchall()
+            cursor.execute("SELECT * FROM tag NATURAL JOIN person WHERE acceptedTag = 1")
+            tags = cursor.fetchall()
+            cursor.execute("SELECT * FROM comment")
+            comments = cursor.fetchall()
+            cursor.execute("SELECT * FROM liked")
+            likes = cursor.fetchall()
+        return render_template("images.html", images=data, tags=tags, comments=comments, likes=likes)
 
 @app.route("/loginAuth", methods=["POST"])
 def loginAuth():

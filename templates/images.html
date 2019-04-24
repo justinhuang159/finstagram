@@ -3,6 +3,7 @@
         <title>Finstagram</title>
     </head>
     <body>
+        <a href="/">Go back</a>
         <h1>Image Gallery</h1>
         <div>
             {% for image in images %}
@@ -14,6 +15,23 @@
                 <input type="text" name="taggedUser{{image.photoID}}" placeholder="Tag friend">
                 <input type="submit" value="Tag User">
             </form>
+            <div>
+                <p>Liked By:</p>
+                {% for like in likes %}
+                    <ul>
+                        {% if like.photoID == image.photoID %}
+                            <li>{{like.username}} at {{like.timestamp}}</li>
+                        {% endif %}
+                    </ul>
+                {% endfor %}
+                <form action="/like" method="post" enctype="multipart/form=data">
+                    <select name="action">
+                        <option value="like.{{image.photoID}}">Like</option>
+                        <option value="unlike.{{image.photoID}}">Unlike</option>
+                    </select>
+                    <input type="submit" value="Submit">
+                </form>
+            </div>
             <p>Tagged Users:
                 <ul>
                 {% for tag in tags %}
@@ -38,6 +56,5 @@
             {% endfor %}
             </div>
         </div>
-        <a href="/">Go back</a>
     </body>
 </html>

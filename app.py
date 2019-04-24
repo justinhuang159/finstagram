@@ -50,8 +50,10 @@ def images():
     query = "SELECT * FROM photo WHERE allFollowers = 1 OR photoOwner = %s OR photoID in (SELECT photoID FROM share NATURAL JOIN belong WHERE belong.username = %s AND share.groupName = belong.groupName) ORDER BY timestamp desc"
     with connection.cursor() as cursor:
         cursor.execute(query, (session["username"], session["username"]))
-    data = cursor.fetchall()
-    return render_template("images.html", images=data)
+        data = cursor.fetchall()
+        cursor.execute("SELECT * FROM tag WHERE acceptedTag = 1")
+        tags = cursor.fetchall()
+    return render_template("images.html", images=data, tags=tags)
 
 @app.route("/image/<image_name>", methods=["GET"])
 def image(image_name):
@@ -82,8 +84,10 @@ def tagUser():
                     cursor.execute(query, (taggedUsername, photoID, 0))
                     query = "SELECT * FROM photo WHERE allFollowers = 1 OR photoOwner = %s OR photoID in (SELECT photoID FROM share NATURAL JOIN belong WHERE belong.username = %s AND share.groupName = belong.groupName) ORDER BY timestamp desc"
                     cursor.execute(query, (session["username"], session["username"]))
-                data = cursor.fetchall()
-                return render_template("images.html", images=data)
+                    data = cursor.fetchall()
+                    cursor.execute("SELECT * FROM tag WHERE acceptedTag = 1")
+                    tags = cursor.fetchall()
+                return render_template("images.html", images=data, tags=tags)
             except:
                 return render_template("home.html")
 

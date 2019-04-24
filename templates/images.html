@@ -14,6 +14,15 @@
                 <input type="text" name="taggedUser{{image.photoID}}" placeholder="Tag friend">
                 <input type="submit" value="Tag User">
             </form>
+            <p>Tagged Users:
+                <ul>
+                {% for tag in tags %}
+                    {%if tag.photoID == image.photoID %}
+                        <li>{{tag.username}}</li>
+                    {% endif %}
+                {% endfor %}
+                </ul>
+            </p>
             <br/>
             {% endfor %}
         </div>

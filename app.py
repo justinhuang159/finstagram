@@ -143,6 +143,31 @@ def acceptFollow():
                     cursor.execute(query, (followerUsername["followerUsername"], session["username"]))
     return redirect(url_for("home") )
 
+@app.route("/tagrequests", methods=["GET"])
+@login_required
+def tagrequests():
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT * FROM tag WHERE username=%s AND acceptedtag=%s", (session["username"], 0))
+        tagrequests = cursor.fetchall()
+        return render_template('tagrequests.html', tagrequests = tagrequests)
+
+@app.route("/acceptTag", methods=["POST"])
+@login_required
+def acceptTag():
+    if request.form:
+        username = session["username"]
+        data = request.form
+        for tag in data:
+            action = data
+            photoID = tag.strip("action")
+            with connection.cursor() as cursor:
+                if action == "accept":
+                    query = "UPDATE tag SET acceptedfollow = %s WHERE photoID=%s AND username=%s"
+                    cursor.execute(query, (1, photoID, username))
+                elif action == "decline":
+                    query = "DELETE FROM tag WHERE photoID = %s AND username = %s"
+                    cursor.execute(query, (photoID, username))
+        return redirect(url_for("home"))
 
 @app.route("/registerAuth", methods=["POST"])
 def registerAuth():

@@ -158,7 +158,7 @@ def tagUser():
                 return render_template("images.html", images=data, tags=tags, comments=comments)
             except:
                 pass
-            return render_template("home.html")
+            return render_template("home.html", username = session["username"])
 
 @app.route("/groups", methods=["GET"])
 @login_required
@@ -268,10 +268,10 @@ def followUser():
                 query = "INSERT INTO follow (followeeUsername, followerUsername, acceptedfollow) VALUES (%s, %s, %s)"
                 cursor.execute (query, (followerUsername, session["username"], 0))
             message = "Request sent successfully"
-            return render_template("home.html", message=message)
+            return render_template("home.html", message=message, username = session["username"])
         except:
             message = "Error following user"
-            return render_template("home.html", message=message)
+            return render_template("home.html", message=message, username = session["username"])
 
 @app.route("/followrequests", methods=["GET"])
 @login_required
@@ -410,10 +410,10 @@ def createGroup():
                 query = "INSERT INTO belong (groupname, groupOwner, username) VALUES (%s, %s, %s)"
                 cursor.execute(query, (groupName, session["username"], session["username"]))
             message = "Close Friend Group successfully created!"
-            return render_template("home.html", groupmessage = message)
+            return render_template("home.html", groupmessage = message, username = session["username"])
         except:
             message = "Error creating Close Friend Group"
-            return render_template("home.html", groupmessage = message)
+            return render_template("home.html", groupmessage = message, username = session["username"])
 
 @app.route('/addfriend', methods=["POST"])
 @login_required

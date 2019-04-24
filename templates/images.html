@@ -10,7 +10,11 @@
             <img src="/image/{{image.filePath}}" width="300"/>
             <p>Caption: {{image.caption}}</p>
             <p>Image ID: {{image.photoID}} Photo Owner: {{image.photoOwner}}</p>
-            <br>
+            <form action="/tagUser" method="post" enctype="multipart/form-data">
+                <input type="text" name="taggedUser{{image.photoID}}" placeholder="Tag friend">
+                <input type="submit" value="Tag User">
+            </form>
+            <br/>
             {% endfor %}
         </div>
         <a href="/">Go back</a>

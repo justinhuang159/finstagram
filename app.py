@@ -67,6 +67,26 @@ def login():
 def register():
     return render_template("register.html")
 
+@app.route("/tagUser", methods=["POST"])
+@login_required
+def tagUser():
+    if request.form:
+        requestData = request.form
+        for name in requestData:
+            photoID = name.strip("taggedUser")
+            taggedUsername = requestData[name]
+            print(taggedUsername, file=sys.stderr)
+            try:
+                with connection.cursor() as cursor:
+                    query = "INSERT INTO tag (username, photoID, acceptedTag) VALUES (%s, %s, %s)"
+                    cursor.execute(query, (taggedUsername, photoID, 0))
+                    query = "SELECT * FROM photo WHERE allFollowers = 1 OR photoOwner = %s OR photoID in (SELECT photoID FROM share NATURAL JOIN belong WHERE belong.username = %s AND share.groupName = belong.groupName) ORDER BY timestamp desc"
+                    cursor.execute(query, (session["username"], session["username"]))
+                data = cursor.fetchall()
+                return render_template("images.html", images=data)
+            except:
+                return render_template("home.html")
+
 @app.route("/addfriends", methods=["GET"])
 @login_required
 def addfriends():
@@ -248,6 +268,8 @@ def createGroup():
             with connection.cursor() as cursor:
                 query = "INSERT INTO closefriendgroup (groupName, groupOwner) VALUES (%s, %s)"
                 cursor.execute(query, (groupName, session["username"]))
+                query = "INSERT INTO belong (groupname, groupOwner) VALUES (%s, %s, %s)"
+                cursor.execute(query, (groupName, session["username"], session["username"]))
             message = "Close Friend Group successfully created!"
             return render_template("home.html", groupmessage = message)
         except:

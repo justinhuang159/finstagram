@@ -150,7 +150,11 @@ def tagUser():
                     if taggedUsername == session["username"]:
                         cursor.execute(query, (taggedUsername, photoID, 1))
                     else:
-                        cursor.execute(query, (taggedUsername, photoID, 0))
+                        query = "SELECT photoID FROM photo WHERE allFollowers = 1 OR photoOwner = %s OR photoID in (SELECT photoID FROM share NATURAL JOIN belong WHERE belong.username = %s AND share.groupName = belong.groupName) ORDER BY timestamp desc"
+                        cursor.execute(query, (taggedUsername, taggedUsername))
+                        data = cursor.fetchall()
+                        if photoID in data:
+                            cursor.execute(query, (taggedUsername, photoID, 0))
                     query = "SELECT * FROM photo WHERE allFollowers = 1 OR photoOwner = %s OR photoID in (SELECT photoID FROM share NATURAL JOIN belong WHERE belong.username = %s AND share.groupName = belong.groupName) ORDER BY timestamp desc"
                     cursor.execute(query, (session["username"], session["username"]))
                     data = cursor.fetchall()
